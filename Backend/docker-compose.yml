@@ -1,0 +1,9 @@
+version: "3.8"
+services:
+  price-mongo:
+    image: mongo:latest
+    container_name: price-mongo
+    ports:
+      - "27018:27017" # Maps host port 27018 to container port 27017
+    volumes:
+      - ./data/price:/data/db
