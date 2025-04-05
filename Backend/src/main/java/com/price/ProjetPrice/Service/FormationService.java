@@ -9,8 +9,10 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Service;
 
+import java.text.Normalizer;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Service class to handle advanced search, paging, and ranking.
@@ -172,5 +174,53 @@ public class FormationService {
 
     public List<Formation> searchFormations(String query) {
         return formationRepository.findTop5ByEstablishmentNameContainingIgnoreCase(query);
+    }
+
+    /**
+     * Return distinct values of the given field from the "formations" collection,
+     * optionally filtered by a "startsWith" query (ignoring case and accents).
+     *
+     * If query is empty, returns up to 5 possible values.
+     * Otherwise, returns all matching the query prefix.
+     */
+    public List<String> getFieldSuggestions(String field, String query) {
+        // Retrieve all distinct values of the given field from Formation
+        List<String> allValues = mongoTemplate.query(Formation.class)
+                .distinct(field)
+                .as(String.class)
+                .all();
+
+        // If query is null or empty, return up to 5 items, no filtering
+        if (query == null || query.trim().isEmpty()) {
+            return allValues.stream()
+                    .filter(val -> val != null && !val.isEmpty())
+                    .limit(5)
+                    .collect(Collectors.toList());
+        }
+
+        // Otherwise, filter them by "startsWith" (case- & accent-insensitive)
+        String normalizedQuery = removeAccents(query.toLowerCase());
+
+        return allValues.stream()
+                .filter(val -> {
+                    if (val == null)
+                        return false;
+                    String normVal = removeAccents(val.toLowerCase());
+                    return normVal.startsWith(normalizedQuery);
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Utility method to remove diacritics (accents)
+     * Example: "é" -> "e", "Ê" -> "E", etc.
+     */
+    private String removeAccents(String input) {
+        if (input == null)
+            return null;
+        // Normalize to decompose accents from letters
+        String normalized = Normalizer.normalize(input, Normalizer.Form.NFD);
+        // Remove all combining diacritical marks
+        return normalized.replaceAll("\\p{M}", "");
     }
 }

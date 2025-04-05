@@ -123,4 +123,23 @@ public class FormationController {
 
         return formationService.rankFormations(sortBy, sortDirection, page, size);
     }
+
+    /**
+     * Example usage:
+     * GET /api/formations/suggestions?field=establishmentStatus&query=pub
+     * 
+     * @param field The DB field to retrieve distinct suggestions from (e.g.
+     *              "establishmentStatus")
+     * @param query (Optional) The partial text to filter by (ignore case &
+     *              accents).
+     * @return List of up to 5 items if query is empty, or all items starting with
+     *         the query.
+     */
+    @GetMapping("/suggestions")
+    public List<String> getFieldSuggestions(
+            @RequestParam String field,
+            @RequestParam(required = false) String query) {
+
+        return formationService.getFieldSuggestions(field, query);
+    }
 }
