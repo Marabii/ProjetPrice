@@ -1,15 +1,23 @@
 import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import {
+  Stack,
+  router,
+  useSegments,
+  useRootNavigationState,
+} from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import "react-native-reanimated";
 import "../global.css";
+import { LoadingOverlay } from "@/components/LoadingOverlay";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
+// Root layout component that wraps the entire app
 export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
@@ -26,12 +34,89 @@ export default function RootLayout() {
   }
 
   return (
+    <AuthProvider>
+      <RootLayoutNav />
+    </AuthProvider>
+  );
+}
+
+// Navigation component that handles routing based on auth state
+function RootLayoutNav() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const segments = useSegments();
+  const navigationState = useRootNavigationState();
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  // Handle routing based on authentication status
+  useEffect(() => {
+    if (!navigationState?.key) return;
+
+    const inAuthGroup = segments[0] === "auth";
+
+    // Use setTimeout to avoid immediate navigation which can cause flickering
+    if (!isLoading) {
+      setTimeout(() => {
+        try {
+          if (!isAuthenticated && !inAuthGroup) {
+            // Redirect to the auth screen if not authenticated
+            setIsNavigating(true);
+            router.replace("/auth");
+          } else if (isAuthenticated && inAuthGroup) {
+            // Redirect to the main app if already authenticated
+            setIsNavigating(true);
+            router.replace("/(tabs)");
+          }
+        } catch (error) {
+          console.error("Navigation error:", error);
+          // If navigation fails, try to recover
+          setIsNavigating(false);
+        }
+      }, 100);
+    }
+  }, [isAuthenticated, isLoading, segments, navigationState?.key]);
+
+  // Update the router methods to show loading indicator during navigation
+  useEffect(() => {
+    const originalReplace = router.replace;
+    router.replace = (href, options) => {
+      setIsNavigating(true);
+      setTimeout(() => {
+        try {
+          originalReplace(href, options);
+          // Hide loading after a short delay to ensure navigation completes
+          setTimeout(() => setIsNavigating(false), 500);
+        } catch (error) {
+          console.error("Router replace error:", error);
+          setIsNavigating(false);
+          // Try to recover by forcing the app to the tabs or auth screen
+          const hrefStr =
+            typeof href === "string" ? href : JSON.stringify(href);
+          if (hrefStr.includes("(tabs)")) {
+            // If we were trying to go to tabs, just set authenticated to true
+            // The navigation guard will handle the rest
+          } else if (hrefStr.includes("auth")) {
+            // If we were trying to go to auth, just set authenticated to false
+            // The navigation guard will handle the rest
+          }
+        }
+      }, 100);
+    };
+
+    return () => {
+      // Restore original method when component unmounts
+      router.replace = originalReplace;
+    };
+  }, []);
+
+  return (
     <ThemeProvider value={DefaultTheme}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="auth" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />
+      <LoadingOverlay visible={isNavigating || isLoading} />
     </ThemeProvider>
   );
 }

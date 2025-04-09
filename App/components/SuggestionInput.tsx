@@ -8,8 +8,7 @@ import {
   FlatList,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-
-const API_BASE_URL = "http://192.168.172.144:8080";
+import { BASE_URL } from "@/constants";
 
 interface SuggestionInputProps {
   label: string;
@@ -18,6 +17,7 @@ interface SuggestionInputProps {
   onChangeText: (text: string) => void;
   onSelectSuggestion: (suggestion: string) => void;
   placeholder?: string;
+  icon?: string; // Ionicons name
 }
 
 // A small dropdown item
@@ -40,6 +40,7 @@ export const SuggestionInput: React.FC<SuggestionInputProps> = ({
   onChangeText,
   onSelectSuggestion,
   placeholder = "",
+  icon,
 }) => {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
@@ -58,7 +59,7 @@ export const SuggestionInput: React.FC<SuggestionInputProps> = ({
         params.append("query", query);
       }
 
-      const url = `${API_BASE_URL}/api/formations/suggestions?${params.toString()}`;
+      const url = `${BASE_URL}/api/formations/suggestions?${params.toString()}`;
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error("Failed to fetch suggestions.");
@@ -89,8 +90,17 @@ export const SuggestionInput: React.FC<SuggestionInputProps> = ({
     <View style={{ marginBottom: 16 }}>
       <Text style={styles.label}>{label}</Text>
       <View style={styles.inputContainer}>
+        {icon && (
+          <View style={styles.iconContainer}>
+            <Ionicons
+              name={icon as keyof typeof Ionicons.glyphMap}
+              size={18}
+              color="#777"
+            />
+          </View>
+        )}
         <TextInput
-          style={styles.textInput}
+          style={[styles.textInput, icon ? styles.textInputWithIcon : null]}
           onFocus={handleFocus}
           onBlur={handleBlur}
           onChangeText={onChangeText}
@@ -127,41 +137,59 @@ export const SuggestionInput: React.FC<SuggestionInputProps> = ({
 const styles = StyleSheet.create({
   label: {
     fontSize: 14,
-    color: "#333",
-    marginBottom: 4,
+    color: "#555",
+    marginBottom: 8,
+    fontWeight: "500",
   },
   inputContainer: {
     position: "relative",
     flexDirection: "row",
     alignItems: "center",
   },
+  iconContainer: {
+    position: "absolute",
+    left: 12,
+    zIndex: 1,
+  },
   textInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    color: "#000",
+    borderColor: "#ddd",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: "#333",
+    backgroundColor: "#fff",
+    fontSize: 15,
+  },
+  textInputWithIcon: {
+    paddingLeft: 40,
   },
   clearButton: {
     position: "absolute",
-    right: 8,
+    right: 10,
   },
   suggestionsContainer: {
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
+    borderColor: "#ddd",
+    borderRadius: 10,
     backgroundColor: "#fff",
     marginTop: 4,
-    maxHeight: 150,
+    maxHeight: 180,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   suggestionItem: {
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
   },
   suggestionItemText: {
     fontSize: 14,
-    color: "#000",
+    color: "#333",
   },
 });

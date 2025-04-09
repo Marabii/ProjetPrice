@@ -1,7 +1,15 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import React from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Animated,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { Formation } from "@/types/Formation";
+// Remove unused import
 
 interface Props {
   formation: Formation;
@@ -14,138 +22,262 @@ export const FormationCard: React.FC<Props> = ({
   isSaved,
   onToggleSave,
 }) => {
-  const [expanded, setExpanded] = useState<boolean>(false);
+  // Calculate admission rate for the progress bar
+  const admissionRate =
+    formation.candidateCount > 0
+      ? formation.admittedCount / formation.candidateCount
+      : 0;
+
+  // Navigate to formation details
+  const handlePress = () => {
+    // Use the correct path format for expo-router
+    router.push({
+      pathname: "/(details)/[id]",
+      params: { id: formation.id.toString() },
+    } as any);
+  };
 
   return (
-    <View style={styles.card}>
-      <View style={styles.infoContainer}>
-        <Text style={styles.title}>{formation.establishmentName}</Text>
-        {formation.establishmentStatus && (
-          <Text style={styles.subtitle}>{formation.establishmentStatus}</Text>
-        )}
-        <View style={styles.locationRow}>
-          <Ionicons name="location" size={20} color="#888" />
-          <Text style={styles.location}>
-            {formation.region ? formation.region : "Région inconnue"}
-          </Text>
-        </View>
-        <Text style={styles.details}>
-          {formation.program ? formation.program : "Programme Inconnu"}
-        </Text>
+    <Animated.View style={styles.card}>
+      <TouchableOpacity
+        style={styles.cardContent}
+        activeOpacity={0.9}
+        onPress={handlePress}
+      >
+        <View style={styles.headerSection}>
+          <View style={styles.titleContainer}>
+            <Text style={styles.title} numberOfLines={2}>
+              {formation.establishmentName}
+            </Text>
+            {formation.establishmentStatus && (
+              <View style={styles.statusBadge}>
+                <Text style={styles.statusText}>
+                  {formation.establishmentStatus}
+                </Text>
+              </View>
+            )}
+          </View>
 
-        {expanded && (
-          <View style={styles.expandedSection}>
-            <Text style={styles.detailText}>
-              Département: {formation.department}
-            </Text>
-            <Text style={styles.detailText}>Académie: {formation.academy}</Text>
-            <Text style={styles.detailText}>Commune: {formation.commune}</Text>
-            <Text style={styles.detailText}>
-              Sélectivité: {formation.selectivity}
-            </Text>
-            <Text style={styles.detailText}>
-              Capacité: {formation.capacity}
-            </Text>
-            <Text style={styles.detailText}>
-              Candidats: {formation.candidateCount}
-            </Text>
-            <Text style={styles.detailText}>
-              Offres d'admission: {formation.admissionOfferCount}
-            </Text>
-            <Text style={styles.detailText}>
-              Admis: {formation.admittedCount}
-            </Text>
-            <Text style={styles.detailText}>
-              Taux d'accès: {formation.accessRate}
+          <View style={styles.locationRow}>
+            <Ionicons name="location-outline" size={16} color="#555" />
+            <Text style={styles.location} numberOfLines={1}>
+              {formation.region ? formation.region : "Région inconnue"}
             </Text>
           </View>
-        )}
-      </View>
 
-      <View style={styles.actionsRow}>
-        <TouchableOpacity
-          style={styles.linkButton}
-          onPress={() => setExpanded(!expanded)}
-        >
-          <Text style={styles.linkText}>{expanded ? "Masquer" : "Voir"}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => onToggleSave(formation)}>
-          <Ionicons
-            name={isSaved ? "heart" : "heart-outline"}
-            size={20}
-            color="#FF7A7C"
-          />
-        </TouchableOpacity>
-      </View>
-    </View>
+          <View style={styles.programContainer}>
+            <Text style={styles.programLabel}>Programme</Text>
+            <Text style={styles.programText} numberOfLines={2}>
+              {formation.program ? formation.program : "Programme Inconnu"}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.statsSection}>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{formation.capacity || "-"}</Text>
+            <Text style={styles.statLabel}>Capacité</Text>
+          </View>
+
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>
+              {formation.candidateCount || "-"}
+            </Text>
+            <Text style={styles.statLabel}>Candidats</Text>
+          </View>
+
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>
+              {formation.admittedCount || "-"}
+            </Text>
+            <Text style={styles.statLabel}>Admis</Text>
+          </View>
+        </View>
+
+        <View style={styles.progressContainer}>
+          <View style={styles.progressBackground}>
+            <View
+              style={[
+                styles.progressBar,
+                {
+                  width: `${Math.min(admissionRate * 100, 100)}%`,
+                  backgroundColor:
+                    admissionRate < 0.3
+                      ? "#e74c3c"
+                      : admissionRate < 0.5
+                      ? "#f39c12"
+                      : admissionRate < 0.7
+                      ? "#3498db"
+                      : "#2ecc71",
+                },
+              ]}
+            />
+          </View>
+          <Text style={styles.progressText}>
+            Taux d'admission: {Math.round(admissionRate * 100)}%
+          </Text>
+        </View>
+
+        <View style={styles.footer}>
+          <View style={styles.viewDetailsButton}>
+            <Text style={styles.viewDetailsText}>Voir les détails</Text>
+            <Ionicons name="chevron-forward" size={16} color="#3498db" />
+          </View>
+
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={(e) => {
+              e.stopPropagation();
+              onToggleSave(formation);
+            }}
+          >
+            <Ionicons
+              name={isSaved ? "heart" : "heart-outline"}
+              size={22}
+              color={isSaved ? "#e74c3c" : "#777"}
+            />
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#D9D9D9",
-    borderRadius: 8,
-    padding: 16,
     marginBottom: 16,
+    borderRadius: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  infoContainer: {
+    shadowRadius: 8,
+    elevation: 4,
     backgroundColor: "#fff",
-    padding: 8,
-    borderRadius: 8,
+  },
+  cardContent: {
+    borderRadius: 16,
+    overflow: "hidden",
+  },
+  headerSection: {
+    padding: 16,
+    backgroundColor: "#fff",
+  },
+  titleContainer: {
+    marginBottom: 10,
   },
   title: {
     fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 4,
+    fontWeight: "700",
+    color: "#2c3e50",
+    marginBottom: 8,
   },
-  subtitle: {
-    fontSize: 16,
-    color: "#555",
-    marginBottom: 2,
+  statusBadge: {
+    backgroundColor: "#e3f2fd",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: "flex-start",
+    marginBottom: 8,
+  },
+  statusText: {
+    fontSize: 12,
+    color: "#1976d2",
+    fontWeight: "600",
   },
   locationRow: {
     flexDirection: "row",
     alignItems: "center",
+    marginBottom: 12,
   },
   location: {
     fontSize: 14,
-    color: "#777",
-    marginLeft: 4,
-    marginBottom: 2,
+    color: "#555",
+    marginLeft: 6,
+    flex: 1,
   },
-  details: {
-    fontSize: 14,
-    color: "#777",
+  programContainer: {
+    backgroundColor: "#f5f5f5",
+    padding: 12,
+    borderRadius: 8,
     marginBottom: 12,
   },
-  expandedSection: {
-    marginTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: "#ccc",
-    paddingTop: 12,
+  programLabel: {
+    fontSize: 12,
+    color: "#777",
+    marginBottom: 4,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
-  detailText: {
-    fontSize: 14,
-    color: "#555",
+  programText: {
+    fontSize: 15,
+    color: "#333",
+    fontWeight: "500",
+  },
+  statsSection: {
+    flexDirection: "row",
+    backgroundColor: "#f8f9fa",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    justifyContent: "space-between",
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#eee",
+  },
+  statItem: {
+    alignItems: "center",
+    flex: 1,
+  },
+  statValue: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#3498db",
     marginBottom: 4,
   },
-  actionsRow: {
+  statLabel: {
+    fontSize: 12,
+    color: "#777",
+  },
+  progressContainer: {
+    padding: 16,
+    backgroundColor: "#fff",
+  },
+  progressBackground: {
+    height: 8,
+    backgroundColor: "#e0e0e0",
+    borderRadius: 4,
+    overflow: "hidden",
+    marginBottom: 8,
+  },
+  progressBar: {
+    height: "100%",
+    borderRadius: 4,
+  },
+  progressText: {
+    fontSize: 12,
+    color: "#777",
+    fontStyle: "italic",
+  },
+  footer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#fff",
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
   },
-  linkButton: {
-    padding: 8,
+  viewDetailsButton: {
+    flexDirection: "row",
+    alignItems: "center",
   },
-  linkText: {
+  viewDetailsText: {
     fontSize: 14,
-    color: "#007AFF",
-    fontWeight: "500",
+    color: "#3498db",
+    fontWeight: "600",
+    marginRight: 4,
+  },
+  saveButton: {
+    padding: 8,
   },
 });

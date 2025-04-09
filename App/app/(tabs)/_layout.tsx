@@ -1,46 +1,53 @@
 import { Tabs } from "expo-router";
 import React from "react";
-import { Platform } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
-import { HapticTab } from "@/components/HapticTab";
-import { IconSymbol } from "@/components/ui/IconSymbol";
-import TabBarBackground from "@/components/ui/TabBarBackground";
-import { Colors } from "@/constants/Colors";
+import { CustomTabBar } from "@/components/CustomTabBar";
 
 export default function TabsLayout() {
   return (
     <Tabs
+      tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{
-        tabBarActiveTintColor: Colors["light"].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: "absolute",
-          },
-          default: {},
-        }),
+        headerShown: true,
+        headerStyle: {
+          backgroundColor: "#3498db",
+        },
+        headerTintColor: "#fff",
+        headerTitleStyle: {
+          fontWeight: "bold",
+        },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: "Formations",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="graduationcap.fill" color={color} />
+          headerShown: false, // Hide the header since we have our custom app bar
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "school" : "school-outline"}
+              size={24}
+              color={color}
+            />
           ),
         }}
       />
       <Tabs.Screen
-        name="moncompte"
+        name="saved"
         options={{
-          title: "Mon compte",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol
-              size={28}
-              name="person.crop.circle.fill"
+          title: "Sauvegardés",
+          headerStyle: {
+            backgroundColor: "#3498db",
+          },
+          headerTintColor: "#fff",
+          headerTitleStyle: {
+            fontWeight: "bold",
+          },
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "heart" : "heart-outline"}
+              size={24}
               color={color}
             />
           ),
@@ -50,10 +57,37 @@ export default function TabsLayout() {
         name="forum"
         options={{
           title: "Forum",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol
-              size={28}
-              name="bubble.left.and.bubble.right.fill"
+          headerStyle: {
+            backgroundColor: "#3498db",
+          },
+          headerTintColor: "#fff",
+          headerTitleStyle: {
+            fontWeight: "bold",
+          },
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "chatbubbles" : "chatbubbles-outline"}
+              size={24}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="moncompte"
+        options={{
+          title: "Mon compte",
+          headerStyle: {
+            backgroundColor: "#3498db",
+          },
+          headerTintColor: "#fff",
+          headerTitleStyle: {
+            fontWeight: "bold",
+          },
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "person" : "person-outline"}
+              size={24}
               color={color}
             />
           ),

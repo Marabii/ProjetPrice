@@ -17,8 +17,8 @@ import { PagedResponse } from "@/types/ApiResponse";
 // Child components
 import { FormationCard } from "@/components/FormationCard";
 import { FilterModal } from "@/components/FilterModal";
+import { BASE_URL } from "@/constants";
 
-const API_BASE_URL = "http://192.168.172.144:8080";
 const PAGE_SIZE = 10;
 
 // Define a type for our applied filters
@@ -92,7 +92,7 @@ export default function FormationsScreen() {
       let url = "";
       if (searchQuery.trim().length > 0) {
         // Searching by name
-        url = `${API_BASE_URL}/api/formations/search?query=${encodeURIComponent(
+        url = `${BASE_URL}/api/formations/search?query=${encodeURIComponent(
           searchQuery
         )}`;
       } else if (
@@ -120,10 +120,10 @@ export default function FormationsScreen() {
             queryParams.delete(key);
           }
         }
-        url = `${API_BASE_URL}/api/formations/advancedSearch?${queryParams.toString()}`;
+        url = `${BASE_URL}/api/formations/advancedSearch?${queryParams.toString()}`;
       } else {
         // No search and no filters – use the "all" endpoint.
-        url = `${API_BASE_URL}/api/formations/all?page=${pageNumber}&size=${PAGE_SIZE}`;
+        url = `${BASE_URL}/api/formations/all?page=${pageNumber}&size=${PAGE_SIZE}`;
       }
 
       const response = await fetch(url);
@@ -338,13 +338,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   appBar: {
-    backgroundColor: "#EAC42ED4",
-    paddingTop: 40,
+    backgroundColor: "#3498db",
+    paddingTop: 50,
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingBottom: 16,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    borderBottomLeftRadius: 15,
+    borderBottomRightRadius: 15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
   },
   searchContainer: {
     flexDirection: "row",
@@ -370,6 +377,7 @@ const styles = StyleSheet.create({
   container: {
     paddingVertical: 16,
     paddingHorizontal: 16,
+    paddingBottom: 100, // Increased padding to avoid bottom navigation overlap
   },
   loadingMore: {
     paddingVertical: 20,

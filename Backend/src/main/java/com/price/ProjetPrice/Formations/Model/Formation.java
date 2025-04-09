@@ -1,4 +1,4 @@
-package com.price.ProjetPrice.Model;
+package com.price.ProjetPrice.Formations.Model;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -50,5 +50,4 @@ public class Formation {
                                                   // recevoir une proposition en phase principale"
     private String professionalTerminalOfferPercentage; // from "Part des terminales professionnelles qui étaient en
                                                         // position de recevoir une proposition en phase principale"
-
 }

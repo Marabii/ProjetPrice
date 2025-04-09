@@ -1,4 +1,4 @@
-package com.price.ProjetPrice.Config;
+package com.price.ProjetPrice.Shared.Config;
 
 import org.springframework.context.annotation.Configuration;
 

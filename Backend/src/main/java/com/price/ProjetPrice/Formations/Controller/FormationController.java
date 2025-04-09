@@ -1,7 +1,7 @@
-package com.price.ProjetPrice.Controller;
+package com.price.ProjetPrice.Formations.Controller;
 
-import com.price.ProjetPrice.Model.Formation;
-import com.price.ProjetPrice.Service.FormationService;
+import com.price.ProjetPrice.Formations.Model.Formation;
+import com.price.ProjetPrice.Formations.Service.FormationService;
 
 import java.util.List;
 

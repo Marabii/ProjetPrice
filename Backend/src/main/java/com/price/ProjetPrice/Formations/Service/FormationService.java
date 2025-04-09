@@ -1,7 +1,8 @@
-package com.price.ProjetPrice.Service;
+package com.price.ProjetPrice.Formations.Service;
 
-import com.price.ProjetPrice.Model.Formation;
-import com.price.ProjetPrice.Repository.FormationRepository;
+import com.price.ProjetPrice.Formations.Model.Formation;
+import com.price.ProjetPrice.Formations.Repository.FormationRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.data.mongodb.core.MongoTemplate;

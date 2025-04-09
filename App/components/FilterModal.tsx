@@ -1,16 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   Modal,
-  Pressable,
+  TouchableOpacity,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Animated,
+  Dimensions,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
+import { Ionicons } from "@expo/vector-icons";
 import { SuggestionInput } from "./SuggestionInput";
+import { BlurView } from "expo-blur";
 
 interface FilterModalProps {
   visible: boolean;
@@ -51,26 +56,73 @@ export const FilterModal: React.FC<FilterModalProps> = ({
   sortDirection,
   setSortDirection,
 }) => {
+  // Animation values
+  const [animation] = useState(new Animated.Value(0));
+
+  // Animate modal when visibility changes
+  React.useEffect(() => {
+    Animated.timing(animation, {
+      toValue: visible ? 1 : 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [visible]);
+
+  const slideY = animation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [Dimensions.get("window").height, 0],
+  });
+
+  const backdropOpacity = animation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 0.5],
+  });
   return (
     <Modal
       visible={visible}
-      animationType="slide"
       transparent={true}
       onRequestClose={onClose}
+      animationType="none"
     >
-      {/* KeyboardAvoidingView helps prevent keyboard from covering fields */}
+      <TouchableWithoutFeedback onPress={onClose}>
+        <Animated.View
+          style={[styles.backdrop, { opacity: backdropOpacity }]}
+        />
+      </TouchableWithoutFeedback>
+
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={{ flex: 1, justifyContent: "flex-end" }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        {/* ScrollView allows content to be scrollable when the keyboard is open */}
-        <ScrollView
-          contentContainerStyle={styles.scrollContainer}
-          keyboardShouldPersistTaps="handled"
+        <Animated.View
+          style={[
+            styles.modalContainer,
+            { transform: [{ translateY: slideY }] },
+          ]}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Filtres &amp; Options</Text>
+          {Platform.OS === "ios" && (
+            <BlurView
+              tint="light"
+              intensity={90}
+              style={StyleSheet.absoluteFill}
+            />
+          )}
+
+          <View style={styles.modalHeader}>
+            <View style={styles.dragIndicator} />
+            <Text style={styles.modalTitle}>Filtres & Options</Text>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <Ionicons name="close" size={24} color="#555" />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView
+            contentContainerStyle={styles.scrollContainer}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.filterSection}>
+              <Text style={styles.sectionTitle}>Localisation</Text>
 
               {/* Region with suggestions */}
               <SuggestionInput
@@ -80,6 +132,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                 onChangeText={setRegionFilter}
                 onSelectSuggestion={(val) => setRegionFilter(val)}
                 placeholder="Ex: Île-de-France"
+                icon="location-outline"
               />
 
               {/* Department with suggestions */}
@@ -90,7 +143,12 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                 onChangeText={setDepartmentFilter}
                 onSelectSuggestion={(val) => setDepartmentFilter(val)}
                 placeholder="Ex: 75"
+                icon="map-outline"
               />
+            </View>
+
+            <View style={styles.filterSection}>
+              <Text style={styles.sectionTitle}>Formation</Text>
 
               {/* Program with suggestions */}
               <SuggestionInput
@@ -100,14 +158,22 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                 onChangeText={setProgramFilter}
                 onSelectSuggestion={(val) => setProgramFilter(val)}
                 placeholder="Ex: CPGE"
+                icon="school-outline"
               />
 
               {/* Establishment status (picker) */}
               <Text style={styles.inputLabel}>Statut de l'établissement</Text>
               <View style={styles.pickerContainer}>
+                <Ionicons
+                  name="business-outline"
+                  size={20}
+                  color="#777"
+                  style={styles.pickerIcon}
+                />
                 <Picker
                   selectedValue={statusFilter}
                   onValueChange={(value) => setStatusFilter(value)}
+                  style={styles.picker}
                 >
                   <Picker.Item label="(Non filtré)" value="" />
                   <Picker.Item label="Public" value="Public" />
@@ -125,13 +191,24 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                   />
                 </Picker>
               </View>
+            </View>
+
+            <View style={styles.filterSection}>
+              <Text style={styles.sectionTitle}>Tri</Text>
 
               {/* Sort By */}
               <Text style={styles.inputLabel}>Trier par</Text>
               <View style={styles.pickerContainer}>
+                <Ionicons
+                  name="options-outline"
+                  size={20}
+                  color="#777"
+                  style={styles.pickerIcon}
+                />
                 <Picker
                   selectedValue={sortBy}
                   onValueChange={(value) => setSortBy(value)}
+                  style={styles.picker}
                 >
                   <Picker.Item label="Identifiant (par défaut)" value="id" />
                   <Picker.Item label="Capacité" value="capacity" />
@@ -148,84 +225,169 @@ export const FilterModal: React.FC<FilterModalProps> = ({
               {/* Sort Direction */}
               <Text style={styles.inputLabel}>Ordre</Text>
               <View style={styles.pickerContainer}>
+                <Ionicons
+                  name="swap-vertical-outline"
+                  size={20}
+                  color="#777"
+                  style={styles.pickerIcon}
+                />
                 <Picker
                   selectedValue={sortDirection}
                   onValueChange={(value) => setSortDirection(value)}
+                  style={styles.picker}
                 >
                   <Picker.Item label="Ascendant (A-Z)" value="ASC" />
                   <Picker.Item label="Descendant (Z-A)" value="DESC" />
                 </Picker>
               </View>
-
-              {/* Action buttons */}
-              <View style={styles.modalActionsRow}>
-                <Pressable style={styles.modalButton} onPress={onClear}>
-                  <Text style={styles.modalButtonText}>Réinitialiser</Text>
-                </Pressable>
-                <Pressable style={styles.modalButton} onPress={onClose}>
-                  <Text style={styles.modalButtonText}>Annuler</Text>
-                </Pressable>
-                <Pressable style={styles.modalButton} onPress={onApply}>
-                  <Text style={styles.modalButtonText}>Appliquer</Text>
-                </Pressable>
-              </View>
             </View>
+          </ScrollView>
+
+          {/* Action buttons */}
+          <View style={styles.actionButtonsContainer}>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.resetButton]}
+              onPress={onClear}
+            >
+              <Ionicons name="refresh-outline" size={18} color="#555" />
+              <Text style={styles.resetButtonText}>Réinitialiser</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionButton, styles.applyButton]}
+              onPress={onApply}
+            >
+              <Text style={styles.applyButtonText}>Appliquer les filtres</Text>
+              <Ionicons name="checkmark" size={18} color="#fff" />
+            </TouchableOpacity>
           </View>
-        </ScrollView>
+        </Animated.View>
       </KeyboardAvoidingView>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  /* This ensures any taps outside the text field cause the scroll to adjust. */
-  scrollContainer: {
-    flexGrow: 1,
-    justifyContent: "center",
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#000",
   },
-  modalOverlay: {
-    flex: 1,
-    // By default, we center the modal in the screen
-    justifyContent: "center",
+  modalContainer: {
+    maxHeight: "90%",
+    backgroundColor: Platform.OS === "ios" ? "transparent" : "#fff",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 20,
   },
-  modalContent: {
-    backgroundColor: "#ffffff",
-    marginHorizontal: 20,
-    borderRadius: 12,
-    padding: 16,
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    backgroundColor:
+      Platform.OS === "ios" ? "rgba(255, 255, 255, 0.8)" : "#fff",
+  },
+  dragIndicator: {
+    width: 40,
+    height: 5,
+    backgroundColor: "#ddd",
+    borderRadius: 3,
+    position: "absolute",
+    top: 8,
+    alignSelf: "center",
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: "600",
-    marginBottom: 12,
-    alignSelf: "center",
+    color: "#333",
+    flex: 1,
+    textAlign: "center",
+  },
+  closeButton: {
+    padding: 5,
+  },
+  scrollContainer: {
+    padding: 20,
+    paddingTop: 10,
+  },
+  filterSection: {
+    marginBottom: 20,
+    backgroundColor: "#f8f9fa",
+    padding: 15,
+    borderRadius: 12,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    paddingBottom: 8,
   },
   inputLabel: {
     fontSize: 14,
-    color: "#333",
-    marginBottom: 4,
-    marginTop: 10,
+    color: "#555",
+    marginBottom: 8,
+    marginTop: 15,
   },
   pickerContainer: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  modalActionsRow: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    marginTop: 16,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 10,
+    marginBottom: 15,
+    backgroundColor: "#fff",
+    overflow: "hidden",
   },
-  modalButton: {
-    backgroundColor: "#EAC42ED4",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 6,
+  pickerIcon: {
+    marginLeft: 12,
   },
-  modalButtonText: {
-    color: "#000",
-    fontSize: 14,
+  picker: {
+    flex: 1,
+    marginLeft: -10,
+  },
+  actionButtonsContainer: {
+    flexDirection: "row",
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+    backgroundColor:
+      Platform.OS === "ios" ? "rgba(255, 255, 255, 0.8)" : "#fff",
+  },
+  actionButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  resetButton: {
+    backgroundColor: "#f5f5f5",
+    marginRight: 10,
+  },
+  resetButtonText: {
+    color: "#555",
     fontWeight: "500",
+    marginLeft: 5,
+  },
+  applyButton: {
+    backgroundColor: "#3498db",
+    marginLeft: 10,
+  },
+  applyButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+    marginRight: 5,
   },
 });
