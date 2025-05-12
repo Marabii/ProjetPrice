@@ -88,6 +88,7 @@ public class FormationService {
             String department,
             String establishmentStatus,
             String program,
+            String bacType,
             int page,
             int size,
             String sortBy,
@@ -113,6 +114,25 @@ public class FormationService {
         // If program is specified
         if (program != null && !program.isBlank()) {
             query.addCriteria(Criteria.where("program").is(program));
+        }
+
+        // If bacType is specified
+        if (bacType != null && !bacType.isBlank()) {
+            // Filter based on the type of baccalaureate
+            switch (bacType) {
+                case "general":
+                    // Filter formations with at least one admitted student with general bac
+                    query.addCriteria(Criteria.where("admittedBacGeneral").gt(0));
+                    break;
+                case "techno":
+                    // Filter formations with at least one admitted student with technological bac
+                    query.addCriteria(Criteria.where("admittedBacTechno").gt(0));
+                    break;
+                case "pro":
+                    // Filter formations with at least one admitted student with professional bac
+                    query.addCriteria(Criteria.where("admittedBacPro").gt(0));
+                    break;
+            }
         }
 
         // Sort & Paging

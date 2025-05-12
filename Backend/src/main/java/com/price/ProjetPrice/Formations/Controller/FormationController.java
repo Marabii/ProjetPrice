@@ -85,7 +85,7 @@ public class FormationController {
     /**
      * Advanced search with multiple possible filters and sorting:
      * GET
-     * /api/formations/advancedSearch?region=Île-de-France&program=CPGE&sortBy=capacity&direction=DESC&page=0&size=10
+     * /api/formations/advancedSearch?region=Île-de-France&program=CPGE&bacType=general&sortBy=capacity&direction=DESC&page=0&size=10
      */
     @GetMapping("/advancedSearch")
     public Page<Formation> advancedSearch(
@@ -93,6 +93,7 @@ public class FormationController {
             @RequestParam(required = false) String department,
             @RequestParam(required = false) String establishmentStatus,
             @RequestParam(required = false) String program,
+            @RequestParam(required = false) String bacType,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
@@ -102,7 +103,7 @@ public class FormationController {
                 : Sort.Direction.ASC;
 
         return formationService.advancedSearch(
-                region, department, establishmentStatus, program,
+                region, department, establishmentStatus, program, bacType,
                 page, size, sortBy, sortDirection);
     }
 
@@ -127,7 +128,7 @@ public class FormationController {
     /**
      * Example usage:
      * GET /api/formations/suggestions?field=establishmentStatus&query=pub
-     * 
+     *
      * @param field The DB field to retrieve distinct suggestions from (e.g.
      *              "establishmentStatus")
      * @param query (Optional) The partial text to filter by (ignore case &

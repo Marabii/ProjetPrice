@@ -13,6 +13,8 @@ import "react-native-reanimated";
 import "../global.css";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { QuizProvider } from "@/context/QuizContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -35,7 +37,9 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <RootLayoutNav />
+      <QuizProvider>
+        <RootLayoutNav />
+      </QuizProvider>
     </AuthProvider>
   );
 }
@@ -46,12 +50,34 @@ function RootLayoutNav() {
   const segments = useSegments();
   const navigationState = useRootNavigationState();
   const [isNavigating, setIsNavigating] = useState(false);
+  const [quizCompleted, setQuizCompleted] = useState<boolean | null>(null);
 
-  // Handle routing based on authentication status
+  // Check if the quiz has been completed
   useEffect(() => {
-    if (!navigationState?.key) return;
+    const checkQuizStatus = async () => {
+      try {
+        const quizState = await AsyncStorage.getItem("quizState");
+        if (quizState) {
+          const parsedState = JSON.parse(quizState);
+          setQuizCompleted(parsedState.isCompleted);
+        } else {
+          setQuizCompleted(false);
+        }
+      } catch (error) {
+        console.error("Error checking quiz status:", error);
+        setQuizCompleted(false);
+      }
+    };
+
+    checkQuizStatus();
+  }, []);
+
+  // Handle routing based on authentication status and quiz completion
+  useEffect(() => {
+    if (!navigationState?.key || quizCompleted === null) return;
 
     const inAuthGroup = segments[0] === "auth";
+    const inQuizScreen = segments[0] === "quiz";
 
     // Use setTimeout to avoid immediate navigation which can cause flickering
     if (!isLoading) {
@@ -65,6 +91,10 @@ function RootLayoutNav() {
             // Redirect to the main app if already authenticated
             setIsNavigating(true);
             router.replace("/(tabs)");
+          } else if (isAuthenticated && !quizCompleted && !inQuizScreen) {
+            // Redirect to the quiz if authenticated but quiz not completed
+            setIsNavigating(true);
+            router.replace("/quiz");
           }
         } catch (error) {
           console.error("Navigation error:", error);
@@ -73,7 +103,13 @@ function RootLayoutNav() {
         }
       }, 100);
     }
-  }, [isAuthenticated, isLoading, segments, navigationState?.key]);
+  }, [
+    isAuthenticated,
+    isLoading,
+    quizCompleted,
+    segments,
+    navigationState?.key,
+  ]);
 
   // Update the router methods to show loading indicator during navigation
   useEffect(() => {
@@ -113,6 +149,7 @@ function RootLayoutNav() {
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="auth" options={{ headerShown: false }} />
+        <Stack.Screen name="quiz" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />

@@ -83,24 +83,25 @@ export default function AuthScreen() {
 
     // Email validation
     if (!email) {
-      newErrors.email = "Email is required";
+      newErrors.email = "L'email est requis";
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = "Email is invalid";
+      newErrors.email = "Format d'email invalide";
     }
 
     // Password validation
     if (!password) {
-      newErrors.password = "Password is required";
+      newErrors.password = "Le mot de passe est requis";
     } else if (password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters";
+      newErrors.password =
+        "Le mot de passe doit contenir au moins 8 caractères";
     } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])/.test(password)) {
       newErrors.password =
-        "Password must include uppercase, lowercase, and numbers";
+        "Le mot de passe doit contenir des majuscules, des minuscules et des chiffres";
     }
 
     // Name validation (only for signup)
     if (!isLogin && !name) {
-      newErrors.name = "Name is required";
+      newErrors.name = "Le nom est requis";
     }
 
     setErrors(newErrors);
@@ -131,17 +132,17 @@ export default function AuthScreen() {
       } else {
         // Show error message
         Alert.alert(
-          "Authentication Error",
+          "Erreur d'authentification",
           response.message ||
             response.errors?.join("\n") ||
-            "An unknown error occurred"
+            "Une erreur inconnue s'est produite"
         );
       }
     } catch (error) {
       console.error("Auth error:", error);
       Alert.alert(
-        "Error",
-        "An unexpected error occurred. Please try again later."
+        "Erreur",
+        "Une erreur inattendue s'est produite. Veuillez réessayer plus tard."
       );
     } finally {
       setIsLoading(false);
@@ -177,12 +178,12 @@ export default function AuthScreen() {
           {/* Header */}
           <View style={styles.headerContainer}>
             <Text style={styles.title}>
-              {isLogin ? "Welcome Back" : "Create Account"}
+              {isLogin ? "Bienvenue" : "Créer un compte"}
             </Text>
             <Text style={styles.subtitle}>
               {isLogin
-                ? "Sign in to continue your journey"
-                : "Join us and discover the best path for your future"}
+                ? "Connectez-vous pour continuer votre parcours"
+                : "Rejoignez-nous et découvrez le meilleur chemin pour votre avenir"}
             </Text>
           </View>
 
@@ -213,7 +214,7 @@ export default function AuthScreen() {
                 />
                 <TextInput
                   style={styles.input}
-                  placeholder="Full Name"
+                  placeholder="Nom complet"
                   placeholderTextColor="#7f8c8d"
                   value={name}
                   onChangeText={setName}
@@ -235,7 +236,7 @@ export default function AuthScreen() {
               />
               <TextInput
                 style={styles.input}
-                placeholder="Email Address"
+                placeholder="Adresse email"
                 placeholderTextColor="#7f8c8d"
                 value={email}
                 onChangeText={setEmail}
@@ -257,7 +258,7 @@ export default function AuthScreen() {
               />
               <TextInput
                 style={styles.input}
-                placeholder="Password"
+                placeholder="Mot de passe"
                 placeholderTextColor="#7f8c8d"
                 value={password}
                 onChangeText={setPassword}
@@ -285,7 +286,7 @@ export default function AuthScreen() {
               disabled={isLoading}
             >
               <Text style={styles.submitButtonText}>
-                {isLogin ? "Sign In" : "Sign Up"}
+                {isLogin ? "Se connecter" : "S'inscrire"}
               </Text>
             </TouchableOpacity>
 
@@ -293,12 +294,12 @@ export default function AuthScreen() {
             <View style={styles.toggleContainer}>
               <Text style={styles.toggleText}>
                 {isLogin
-                  ? "Don't have an account?"
-                  : "Already have an account?"}
+                  ? "Vous n'avez pas de compte ?"
+                  : "Vous avez déjà un compte ?"}
               </Text>
               <TouchableOpacity onPress={toggleAuthMode}>
                 <Text style={styles.toggleButton}>
-                  {isLogin ? "Sign Up" : "Sign In"}
+                  {isLogin ? "S'inscrire" : "Se connecter"}
                 </Text>
               </TouchableOpacity>
             </View>

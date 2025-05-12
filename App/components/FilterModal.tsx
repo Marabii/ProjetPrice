@@ -32,6 +32,8 @@ interface FilterModalProps {
   setStatusFilter: (val: string) => void;
   programFilter: string;
   setProgramFilter: (val: string) => void;
+  bacTypeFilter: string;
+  setBacTypeFilter: (val: string) => void;
   sortBy: string;
   setSortBy: (val: string) => void;
   sortDirection: "ASC" | "DESC";
@@ -51,6 +53,8 @@ export const FilterModal: React.FC<FilterModalProps> = ({
   setStatusFilter,
   programFilter,
   setProgramFilter,
+  bacTypeFilter,
+  setBacTypeFilter,
   sortBy,
   setSortBy,
   sortDirection,
@@ -189,6 +193,27 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                     label="Privé sous contrat d'association"
                     value="Privé sous contrat d'association"
                   />
+                </Picker>
+              </View>
+
+              {/* Baccalaureate type (picker) */}
+              <Text style={styles.inputLabel}>Type de baccalauréat</Text>
+              <View style={styles.pickerContainer}>
+                <Ionicons
+                  name="school-outline"
+                  size={20}
+                  color="#777"
+                  style={styles.pickerIcon}
+                />
+                <Picker
+                  selectedValue={bacTypeFilter}
+                  onValueChange={(value) => setBacTypeFilter(value)}
+                  style={styles.picker}
+                >
+                  <Picker.Item label="(Non filtré)" value="" />
+                  <Picker.Item label="Bac Général" value="general" />
+                  <Picker.Item label="Bac Technologique" value="techno" />
+                  <Picker.Item label="Bac Professionnel" value="pro" />
                 </Picker>
               </View>
             </View>

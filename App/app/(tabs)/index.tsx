@@ -10,9 +10,11 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
 
 import { Formation } from "@/types/Formation";
 import { PagedResponse } from "@/types/ApiResponse";
+import { useQuiz } from "@/context/QuizContext";
 
 // Child components
 import { FormationCard } from "@/components/FormationCard";
@@ -27,6 +29,7 @@ interface Filters {
   department: string;
   status: string;
   program: string;
+  bacType: string;
   sortBy: string;
   sortDirection: "ASC" | "DESC";
 }
@@ -36,15 +39,21 @@ const defaultFilters: Filters = {
   department: "",
   status: "",
   program: "",
+  bacType: "",
   sortBy: "id",
   sortDirection: "ASC",
 };
 
 export default function FormationsScreen() {
+  const router = useRouter();
+  const { quizState } = useQuiz();
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   // The list of displayed formations
   const [suggestions, setSuggestions] = useState<Formation[]>([]);
+  const [filteredSuggestions, setFilteredSuggestions] = useState<Formation[]>(
+    []
+  );
 
   // The list of user-saved formations
   const [savedFormations, setSavedFormations] = useState<Formation[]>([]);
@@ -60,11 +69,17 @@ export default function FormationsScreen() {
   const [departmentFilter, setDepartmentFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>(""); // public / privé
   const [programFilter, setProgramFilter] = useState<string>("");
+  const [bacTypeFilter, setBacTypeFilter] = useState<string>(""); // général / techno / pro
   const [sortBy, setSortBy] = useState<string>("id");
   const [sortDirection, setSortDirection] = useState<"ASC" | "DESC">("ASC");
 
   // Applied filter state – only updated when user clicks "Apply"
   const [appliedFilters, setAppliedFilters] = useState<Filters>(defaultFilters);
+
+  // Quiz results state
+  const [quizCompleted, setQuizCompleted] = useState<boolean>(false);
+  const [showingRecommendations, setShowingRecommendations] =
+    useState<boolean>(false);
 
   // Filter Modal visibility
   const [filterModalVisible, setFilterModalVisible] = useState<boolean>(false);
@@ -83,7 +98,49 @@ export default function FormationsScreen() {
       }
     };
     loadSavedFormations();
-  }, []);
+
+    // Check if quiz is completed
+    setQuizCompleted(quizState.isCompleted);
+  }, [quizState.isCompleted]);
+
+  // ---------------------------------------------
+  // Filter formations based on quiz results
+  useEffect(() => {
+    if (!quizCompleted || !showingRecommendations || suggestions.length === 0) {
+      setFilteredSuggestions(suggestions);
+      return;
+    }
+
+    // Get the top formation types based on quiz results
+    const topFormationTypes = [...quizState.scores]
+      .sort((a, b) => b.percentage - a.percentage)
+      .slice(0, 3)
+      .map((score) => score.type);
+
+    // Map formation types to program names
+    const programMapping: Record<string, string[]> = {
+      CPGE: ["CPGE", "Classe préparatoire"],
+      BUT: ["BUT", "DUT", "Bachelor Universitaire de Technologie"],
+      BTS: ["BTS", "Brevet de Technicien Supérieur"],
+      Fac: ["Licence", "Université", "Faculté"],
+      EcolePostBac: ["École", "Ecole", "Grande École", "Grande Ecole"],
+      Alternance: ["Alternance", "Apprentissage", "Contrat pro"],
+    };
+
+    // Filter formations based on top formation types
+    const filtered = suggestions.filter((formation) => {
+      // Check if the formation program matches any of the top formation types
+      return topFormationTypes.some((type) => {
+        const programPatterns = programMapping[type] || [];
+        return programPatterns.some((pattern) =>
+          formation.program.toLowerCase().includes(pattern.toLowerCase())
+        );
+      });
+    });
+
+    // If we have filtered results, use them; otherwise, show all
+    setFilteredSuggestions(filtered.length > 0 ? filtered : suggestions);
+  }, [suggestions, quizCompleted, showingRecommendations, quizState.scores]);
 
   // ---------------------------------------------
   // Unified function to load data, based on search and/or applied filters.
@@ -100,6 +157,7 @@ export default function FormationsScreen() {
         appliedFilters.department.trim() ||
         appliedFilters.status.trim() ||
         appliedFilters.program.trim() ||
+        appliedFilters.bacType.trim() ||
         appliedFilters.sortBy !== "id" ||
         appliedFilters.sortDirection !== "ASC"
       ) {
@@ -109,6 +167,7 @@ export default function FormationsScreen() {
           department: appliedFilters.department,
           establishmentStatus: appliedFilters.status,
           program: appliedFilters.program,
+          bacType: appliedFilters.bacType,
           page: pageNumber.toString(),
           size: PAGE_SIZE.toString(),
           sortBy: appliedFilters.sortBy,
@@ -238,6 +297,7 @@ export default function FormationsScreen() {
       department: departmentFilter,
       status: statusFilter,
       program: programFilter,
+      bacType: bacTypeFilter,
       sortBy: sortBy,
       sortDirection: sortDirection,
     });
@@ -250,6 +310,7 @@ export default function FormationsScreen() {
     setDepartmentFilter("");
     setStatusFilter("");
     setProgramFilter("");
+    setBacTypeFilter("");
     setSortBy("id");
     setSortDirection("ASC");
     setAppliedFilters(defaultFilters);
@@ -296,11 +357,52 @@ export default function FormationsScreen() {
         setStatusFilter={setStatusFilter}
         programFilter={programFilter}
         setProgramFilter={setProgramFilter}
+        bacTypeFilter={bacTypeFilter}
+        setBacTypeFilter={setBacTypeFilter}
         sortBy={sortBy}
         setSortBy={setSortBy}
         sortDirection={sortDirection}
         setSortDirection={setSortDirection}
       />
+
+      {/* Quiz Recommendations Toggle */}
+      {quizCompleted && (
+        <View style={styles.recommendationsContainer}>
+          <TouchableOpacity
+            style={[
+              styles.recommendationsButton,
+              showingRecommendations && styles.recommendationsButtonActive,
+            ]}
+            onPress={() => setShowingRecommendations(!showingRecommendations)}
+          >
+            <Ionicons
+              name={showingRecommendations ? "star" : "star-outline"}
+              size={20}
+              color={showingRecommendations ? "#fff" : "#3498db"}
+            />
+            <Text
+              style={[
+                styles.recommendationsText,
+                showingRecommendations && styles.recommendationsTextActive,
+              ]}
+            >
+              {showingRecommendations
+                ? "Afficher toutes les formations"
+                : "Afficher les recommandations du quiz"}
+            </Text>
+          </TouchableOpacity>
+
+          {showingRecommendations && (
+            <TouchableOpacity
+              style={styles.retakeQuizButton}
+              onPress={() => router.push("/quiz")}
+            >
+              <Ionicons name="refresh" size={18} color="#666" />
+              <Text style={styles.retakeQuizText}>Refaire le quiz</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
 
       {/* Content: FlatList for infinite scrolling */}
       {initialLoading ? (
@@ -310,7 +412,7 @@ export default function FormationsScreen() {
       ) : (
         <FlatList
           contentContainerStyle={styles.container}
-          data={suggestions}
+          data={showingRecommendations ? filteredSuggestions : suggestions}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <FormationCard
@@ -373,6 +475,44 @@ const styles = StyleSheet.create({
   },
   filterButton: {
     padding: 8,
+  },
+  recommendationsContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#f8f8f8",
+  },
+  recommendationsButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#3498db",
+    backgroundColor: "#fff",
+  },
+  recommendationsButtonActive: {
+    backgroundColor: "#3498db",
+  },
+  recommendationsText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: "#3498db",
+    fontWeight: "500",
+  },
+  recommendationsTextActive: {
+    color: "#fff",
+  },
+  retakeQuizButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
+    padding: 8,
+  },
+  retakeQuizText: {
+    marginLeft: 6,
+    fontSize: 14,
+    color: "#666",
   },
   container: {
     paddingVertical: 16,
