@@ -94,6 +94,8 @@ public class FormationController {
             @RequestParam(required = false) String establishmentStatus,
             @RequestParam(required = false) String program,
             @RequestParam(required = false) String bacType,
+            @RequestParam(required = false) Boolean hasDetailedInfo,
+            @RequestParam(required = false) String alternanceAvailable,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
@@ -104,7 +106,7 @@ public class FormationController {
 
         return formationService.advancedSearch(
                 region, department, establishmentStatus, program, bacType,
-                page, size, sortBy, sortDirection);
+                hasDetailedInfo, alternanceAvailable, page, size, sortBy, sortDirection);
     }
 
     /**

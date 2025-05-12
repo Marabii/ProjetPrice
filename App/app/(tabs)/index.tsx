@@ -30,6 +30,8 @@ interface Filters {
   status: string;
   program: string;
   bacType: string;
+  hasDetailedInfo: boolean | null;
+  alternanceAvailable: string;
   sortBy: string;
   sortDirection: "ASC" | "DESC";
 }
@@ -40,6 +42,8 @@ const defaultFilters: Filters = {
   status: "",
   program: "",
   bacType: "",
+  hasDetailedInfo: null,
+  alternanceAvailable: "",
   sortBy: "id",
   sortDirection: "ASC",
 };
@@ -70,6 +74,9 @@ export default function FormationsScreen() {
   const [statusFilter, setStatusFilter] = useState<string>(""); // public / privé
   const [programFilter, setProgramFilter] = useState<string>("");
   const [bacTypeFilter, setBacTypeFilter] = useState<string>(""); // général / techno / pro
+  const [hasDetailedInfoFilter, setHasDetailedInfoFilter] =
+    useState<boolean>(false);
+  const [alternanceFilter, setAlternanceFilter] = useState<string>("");
   const [sortBy, setSortBy] = useState<string>("id");
   const [sortDirection, setSortDirection] = useState<"ASC" | "DESC">("ASC");
 
@@ -158,6 +165,8 @@ export default function FormationsScreen() {
         appliedFilters.status.trim() ||
         appliedFilters.program.trim() ||
         appliedFilters.bacType.trim() ||
+        appliedFilters.hasDetailedInfo !== null ||
+        appliedFilters.alternanceAvailable.trim() ||
         appliedFilters.sortBy !== "id" ||
         appliedFilters.sortDirection !== "ASC"
       ) {
@@ -173,6 +182,22 @@ export default function FormationsScreen() {
           sortBy: appliedFilters.sortBy,
           direction: appliedFilters.sortDirection,
         });
+
+        // Add hasDetailedInfo only if it's not null
+        if (appliedFilters.hasDetailedInfo !== null) {
+          queryParams.append(
+            "hasDetailedInfo",
+            appliedFilters.hasDetailedInfo.toString()
+          );
+        }
+
+        // Add alternanceAvailable if it's not empty
+        if (appliedFilters.alternanceAvailable) {
+          queryParams.append(
+            "alternanceAvailable",
+            appliedFilters.alternanceAvailable
+          );
+        }
         // Remove empty filter values
         for (const [key, val] of queryParams.entries()) {
           if (!val) {
@@ -298,6 +323,8 @@ export default function FormationsScreen() {
       status: statusFilter,
       program: programFilter,
       bacType: bacTypeFilter,
+      hasDetailedInfo: hasDetailedInfoFilter ? true : null,
+      alternanceAvailable: alternanceFilter,
       sortBy: sortBy,
       sortDirection: sortDirection,
     });
@@ -311,6 +338,8 @@ export default function FormationsScreen() {
     setStatusFilter("");
     setProgramFilter("");
     setBacTypeFilter("");
+    setHasDetailedInfoFilter(false);
+    setAlternanceFilter("");
     setSortBy("id");
     setSortDirection("ASC");
     setAppliedFilters(defaultFilters);
@@ -363,6 +392,10 @@ export default function FormationsScreen() {
         setSortBy={setSortBy}
         sortDirection={sortDirection}
         setSortDirection={setSortDirection}
+        hasDetailedInfoFilter={hasDetailedInfoFilter}
+        setHasDetailedInfoFilter={setHasDetailedInfoFilter}
+        alternanceFilter={alternanceFilter}
+        setAlternanceFilter={setAlternanceFilter}
       />
 
       {/* Quiz Recommendations Toggle */}

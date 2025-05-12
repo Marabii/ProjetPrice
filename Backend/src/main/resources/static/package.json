@@ -1,0 +1,12 @@
+{
+  "name": "csv-merger",
+  "version": "1.0.0",
+  "description": "Script to merge CSV files for GlobalPriceTracker",
+  "main": "mergeCSVFiles.js",
+  "scripts": {
+    "merge": "node mergeCSVFiles.js"
+  },
+  "dependencies": {
+    "csv-parser": "^3.2.0"
+  }
+}

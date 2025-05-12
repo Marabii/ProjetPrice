@@ -38,6 +38,12 @@ interface FilterModalProps {
   setSortBy: (val: string) => void;
   sortDirection: "ASC" | "DESC";
   setSortDirection: (val: "ASC" | "DESC") => void;
+
+  // New filters for detailed info
+  hasDetailedInfoFilter: boolean;
+  setHasDetailedInfoFilter: (val: boolean) => void;
+  alternanceFilter: string;
+  setAlternanceFilter: (val: string) => void;
 }
 
 export const FilterModal: React.FC<FilterModalProps> = ({
@@ -59,6 +65,10 @@ export const FilterModal: React.FC<FilterModalProps> = ({
   setSortBy,
   sortDirection,
   setSortDirection,
+  hasDetailedInfoFilter,
+  setHasDetailedInfoFilter,
+  alternanceFilter,
+  setAlternanceFilter,
 }) => {
   // Animation values
   const [animation] = useState(new Animated.Value(0));
@@ -219,6 +229,54 @@ export const FilterModal: React.FC<FilterModalProps> = ({
             </View>
 
             <View style={styles.filterSection}>
+              <Text style={styles.sectionTitle}>Informations détaillées</Text>
+
+              {/* Has Detailed Info Switch */}
+              <View style={styles.switchContainer}>
+                <Text style={styles.switchLabel}>
+                  Afficher uniquement les établissements avec informations
+                  détaillées
+                </Text>
+                <TouchableOpacity
+                  style={[
+                    styles.switchButton,
+                    hasDetailedInfoFilter && styles.switchButtonActive,
+                  ]}
+                  onPress={() =>
+                    setHasDetailedInfoFilter(!hasDetailedInfoFilter)
+                  }
+                >
+                  <View
+                    style={[
+                      styles.switchThumb,
+                      hasDetailedInfoFilter && styles.switchThumbActive,
+                    ]}
+                  />
+                </TouchableOpacity>
+              </View>
+
+              {/* Alternance Filter */}
+              <Text style={styles.inputLabel}>Alternance disponible</Text>
+              <View style={styles.pickerContainer}>
+                <Ionicons
+                  name="briefcase-outline"
+                  size={20}
+                  color="#777"
+                  style={styles.pickerIcon}
+                />
+                <Picker
+                  selectedValue={alternanceFilter}
+                  onValueChange={(value) => setAlternanceFilter(value)}
+                  style={styles.picker}
+                >
+                  <Picker.Item label="(Non filtré)" value="" />
+                  <Picker.Item label="Oui" value="Oui" />
+                  <Picker.Item label="Non" value="Non" />
+                </Picker>
+              </View>
+            </View>
+
+            <View style={styles.filterSection}>
               <Text style={styles.sectionTitle}>Tri</Text>
 
               {/* Sort By */}
@@ -236,14 +294,22 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                   style={styles.picker}
                 >
                   <Picker.Item label="Identifiant (par défaut)" value="id" />
-                  <Picker.Item label="Capacité" value="capacity" />
                   <Picker.Item label="Sélectivité" value="selectivity" />
                   <Picker.Item label="Candidats" value="candidateCount" />
-                  <Picker.Item label="Admis" value="admittedCount" />
                   <Picker.Item
-                    label="Propositions d'admission"
-                    value="admissionOfferCount"
+                    label="Admis bac général"
+                    value="admittedBacGeneral"
                   />
+                  <Picker.Item
+                    label="Admis bac techno"
+                    value="admittedBacTechno"
+                  />
+                  <Picker.Item label="Admis bac pro" value="admittedBacPro" />
+                  <Picker.Item
+                    label="Nom de l'établissement"
+                    value="establishmentName"
+                  />
+                  <Picker.Item label="Région" value="region" />
                 </Picker>
               </View>
 
@@ -293,6 +359,43 @@ export const FilterModal: React.FC<FilterModalProps> = ({
 };
 
 const styles = StyleSheet.create({
+  switchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 15,
+    marginTop: 5,
+  },
+  switchLabel: {
+    fontSize: 14,
+    color: "#555",
+    flex: 1,
+    paddingRight: 10,
+  },
+  switchButton: {
+    width: 50,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#ddd",
+    padding: 2,
+  },
+  switchButtonActive: {
+    backgroundColor: "#3498db",
+  },
+  switchThumb: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1,
+    elevation: 2,
+  },
+  switchThumbActive: {
+    transform: [{ translateX: 22 }],
+  },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "#000",

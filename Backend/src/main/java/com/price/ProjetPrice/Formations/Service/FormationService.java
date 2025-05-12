@@ -89,6 +89,8 @@ public class FormationService {
             String establishmentStatus,
             String program,
             String bacType,
+            Boolean hasDetailedInfo,
+            String alternanceAvailable,
             int page,
             int size,
             String sortBy,
@@ -135,6 +137,16 @@ public class FormationService {
             }
         }
 
+        // If hasDetailedInfo is specified
+        if (hasDetailedInfo != null) {
+            query.addCriteria(Criteria.where("hasDetailedInfo").is(hasDetailedInfo));
+        }
+
+        // If alternanceAvailable is specified
+        if (alternanceAvailable != null && !alternanceAvailable.isBlank()) {
+            query.addCriteria(Criteria.where("alternanceAvailable").is(alternanceAvailable));
+        }
+
         // Sort & Paging
         Pageable pageable = PageRequest.of(page, size, direction, (sortBy != null ? sortBy : "id"));
 
@@ -169,18 +181,28 @@ public class FormationService {
     }
 
     /**
-     * If you need to derive acceptance rate from numeric columns
-     * (admittedCount / candidateCount), but the CSV 'accessRate' is a string,
-     * you could parse or compute your own ratio. Example below is purely optional.
+     * If you need to derive acceptance rate from numeric columns,
+     * we'll calculate based on the sum of admitted students by bac type
+     * since we no longer have admittedCount.
      */
     public Double computeNumericAcceptanceRate(Formation f) {
         if (f.getCandidateCount() == null || f.getCandidateCount() == 0) {
             return null;
         }
-        if (f.getAdmittedCount() == null) {
-            return 0.0;
+
+        // Calculate total admitted based on the sum of admitted by bac type
+        int totalAdmitted = 0;
+        if (f.getAdmittedBacGeneral() != null) {
+            totalAdmitted += f.getAdmittedBacGeneral();
         }
-        return (f.getAdmittedCount() * 1.0) / f.getCandidateCount();
+        if (f.getAdmittedBacTechno() != null) {
+            totalAdmitted += f.getAdmittedBacTechno();
+        }
+        if (f.getAdmittedBacPro() != null) {
+            totalAdmitted += f.getAdmittedBacPro();
+        }
+
+        return (totalAdmitted * 1.0) / f.getCandidateCount();
     }
 
     // Save or update

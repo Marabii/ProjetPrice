@@ -23,10 +23,12 @@ export const FormationCard: React.FC<Props> = ({
   onToggleSave,
 }) => {
   // Calculate admission rate for the progress bar
+  const totalAdmitted =
+    (formation.admittedBacGeneral || 0) +
+    (formation.admittedBacTechno || 0) +
+    (formation.admittedBacPro || 0);
   const admissionRate =
-    formation.candidateCount > 0
-      ? formation.admittedCount / formation.candidateCount
-      : 0;
+    formation.candidateCount > 0 ? totalAdmitted / formation.candidateCount : 0;
 
   // Navigate to formation details
   const handlePress = () => {
@@ -49,13 +51,26 @@ export const FormationCard: React.FC<Props> = ({
             <Text style={styles.title} numberOfLines={2}>
               {formation.establishmentName}
             </Text>
-            {formation.establishmentStatus && (
-              <View style={styles.statusBadge}>
-                <Text style={styles.statusText}>
-                  {formation.establishmentStatus}
-                </Text>
-              </View>
-            )}
+            <View style={styles.badgeContainer}>
+              {formation.establishmentStatus && (
+                <View style={styles.statusBadge}>
+                  <Text style={styles.statusText}>
+                    {formation.establishmentStatus}
+                  </Text>
+                </View>
+              )}
+              {formation.hasDetailedInfo && (
+                <View style={styles.detailedInfoBadge}>
+                  <Ionicons
+                    name="information-circle"
+                    size={12}
+                    color="#fff"
+                    style={styles.badgeIcon}
+                  />
+                  <Text style={styles.detailedInfoText}>Infos détaillées</Text>
+                </View>
+              )}
+            </View>
           </View>
 
           <View style={styles.locationRow}>
@@ -75,11 +90,6 @@ export const FormationCard: React.FC<Props> = ({
 
         <View style={styles.statsSection}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{formation.capacity || "-"}</Text>
-            <Text style={styles.statLabel}>Capacité</Text>
-          </View>
-
-          <View style={styles.statItem}>
             <Text style={styles.statValue}>
               {formation.candidateCount || "-"}
             </Text>
@@ -87,10 +97,15 @@ export const FormationCard: React.FC<Props> = ({
           </View>
 
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>
-              {formation.admittedCount || "-"}
-            </Text>
+            <Text style={styles.statValue}>{totalAdmitted || "-"}</Text>
             <Text style={styles.statLabel}>Admis</Text>
+          </View>
+
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>
+              {Math.round(admissionRate * 100) + "%"}
+            </Text>
+            <Text style={styles.statLabel}>Taux d'admission</Text>
           </View>
         </View>
 
@@ -171,18 +186,38 @@ const styles = StyleSheet.create({
     color: "#2c3e50",
     marginBottom: 8,
   },
+  badgeContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: 8,
+    gap: 8,
+  },
   statusBadge: {
     backgroundColor: "#e3f2fd",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
-    alignSelf: "flex-start",
-    marginBottom: 8,
   },
   statusText: {
     fontSize: 12,
     color: "#1976d2",
     fontWeight: "600",
+  },
+  detailedInfoBadge: {
+    backgroundColor: "#4CAF50",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  detailedInfoText: {
+    fontSize: 12,
+    color: "#fff",
+    fontWeight: "600",
+  },
+  badgeIcon: {
+    marginRight: 4,
   },
   locationRow: {
     flexDirection: "row",

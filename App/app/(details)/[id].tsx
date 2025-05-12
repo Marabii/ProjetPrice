@@ -9,6 +9,7 @@ import {
   Animated,
   Platform,
   Share,
+  Linking,
 } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -188,11 +189,13 @@ export default function FormationDetailsScreen() {
     );
   }
 
-  // Calculate admission rate
+  // Calculate admission rate based on the sum of admitted by bac type
+  const totalAdmitted =
+    (formation.admittedBacGeneral || 0) +
+    (formation.admittedBacTechno || 0) +
+    (formation.admittedBacPro || 0);
   const admissionRate =
-    formation.candidateCount > 0
-      ? formation.admittedCount / formation.candidateCount
-      : 0;
+    formation.candidateCount > 0 ? totalAdmitted / formation.candidateCount : 0;
 
   return (
     <>
@@ -331,21 +334,19 @@ export default function FormationDetailsScreen() {
           <View style={styles.statsContainer}>
             <View style={styles.statCard}>
               <Text style={styles.statValue}>
-                {formation.capacity || "N/A"}
-              </Text>
-              <Text style={styles.statLabel}>Capacité</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>
                 {formation.candidateCount || "N/A"}
               </Text>
               <Text style={styles.statLabel}>Candidats</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statValue}>
-                {formation.admittedCount || "N/A"}
-              </Text>
+              <Text style={styles.statValue}>{totalAdmitted || "N/A"}</Text>
               <Text style={styles.statLabel}>Admis</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>
+                {Math.round(admissionRate * 100) + "%"}
+              </Text>
+              <Text style={styles.statLabel}>Taux d'admission</Text>
             </View>
           </View>
 
@@ -363,10 +364,7 @@ export default function FormationDetailsScreen() {
                 ]}
               />
               <Text style={styles.progressText}>
-                {getPercentage(
-                  formation.admittedCount,
-                  formation.candidateCount
-                )}
+                {getPercentage(totalAdmitted, formation.candidateCount)}
               </Text>
             </View>
             <Text style={styles.admissionText}>
@@ -399,20 +397,6 @@ export default function FormationDetailsScreen() {
             </View>
 
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Offres d'admission</Text>
-              <Text style={styles.detailValue}>
-                {formation.admissionOfferCount || "N/A"}
-              </Text>
-            </View>
-
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Admis néo-bacheliers</Text>
-              <Text style={styles.detailValue}>
-                {formation.admittedNeoBac || "N/A"}
-              </Text>
-            </View>
-
-            <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Admis bac général</Text>
               <Text style={styles.detailValue}>
                 {formation.admittedBacGeneral || "N/A"}
@@ -430,13 +414,6 @@ export default function FormationDetailsScreen() {
               <Text style={styles.detailLabel}>Admis bac pro</Text>
               <Text style={styles.detailValue}>
                 {formation.admittedBacPro || "N/A"}
-              </Text>
-            </View>
-
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Taux d'accès</Text>
-              <Text style={styles.detailValue}>
-                {formation.accessRate || "N/A"}
               </Text>
             </View>
           </View>
@@ -476,6 +453,186 @@ export default function FormationDetailsScreen() {
             </View>
           </View>
 
+          {/* Detailed information section (only shown if hasDetailedInfo is true) */}
+          {formation.hasDetailedInfo && (
+            <View style={styles.detailedInfoContainer}>
+              <Text style={styles.sectionTitle}>Informations détaillées</Text>
+
+              {formation.website && (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Site web</Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      // Add http:// if it doesn't already have it
+                      let url = formation.website || "";
+                      if (
+                        !url.startsWith("http://") &&
+                        !url.startsWith("https://")
+                      ) {
+                        url = "http://" + url;
+                      }
+                      // Open the URL in the browser
+                      Linking.openURL(url);
+                    }}
+                  >
+                    <Text style={styles.detailValueLink}>
+                      {formation.website}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {formation.duration && (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Durée</Text>
+                  <Text style={styles.detailValue}>{formation.duration}</Text>
+                </View>
+              )}
+
+              {formation.cost && (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Coût</Text>
+                  <Text style={styles.detailValue}>{formation.cost}</Text>
+                </View>
+              )}
+
+              {formation.privatePublicStatus && (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Statut</Text>
+                  <Text style={styles.detailValue}>
+                    {formation.privatePublicStatus}
+                  </Text>
+                </View>
+              )}
+
+              {formation.domainsOffered && (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Domaines enseignés</Text>
+                  <Text style={styles.detailValue}>
+                    {formation.domainsOffered}
+                  </Text>
+                </View>
+              )}
+
+              {formation.alternanceAvailable && (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Alternance</Text>
+                  <Text style={styles.detailValue}>
+                    {formation.alternanceAvailable}
+                  </Text>
+                </View>
+              )}
+
+              {formation.admissionProcess && (
+                <View style={styles.infoCard}>
+                  <View style={styles.infoCardHeader}>
+                    <Ionicons name="school-outline" size={20} color="#3498db" />
+                    <Text style={styles.infoCardTitle}>Admission</Text>
+                  </View>
+                  <Text style={styles.infoCardText}>
+                    {formation.admissionProcess}
+                  </Text>
+                </View>
+              )}
+
+              {formation.studentLife && (
+                <View style={styles.infoCard}>
+                  <View style={styles.infoCardHeader}>
+                    <Ionicons name="people-outline" size={20} color="#3498db" />
+                    <Text style={styles.infoCardTitle}>Vie étudiante</Text>
+                  </View>
+                  <Text style={styles.infoCardText}>
+                    {formation.studentLife}
+                  </Text>
+                </View>
+              )}
+
+              {formation.associations && (
+                <View style={styles.infoCard}>
+                  <View style={styles.infoCardHeader}>
+                    <Ionicons name="heart-outline" size={20} color="#3498db" />
+                    <Text style={styles.infoCardTitle}>Associations</Text>
+                  </View>
+                  <Text style={styles.infoCardText}>
+                    {formation.associations}
+                  </Text>
+                </View>
+              )}
+
+              {formation.atmosphere && (
+                <View style={styles.infoCard}>
+                  <View style={styles.infoCardHeader}>
+                    <Ionicons name="sunny-outline" size={20} color="#3498db" />
+                    <Text style={styles.infoCardTitle}>Ambiance</Text>
+                  </View>
+                  <Text style={styles.infoCardText}>
+                    {formation.atmosphere}
+                  </Text>
+                </View>
+              )}
+
+              {formation.careerProspects && (
+                <View style={styles.infoCard}>
+                  <View style={styles.infoCardHeader}>
+                    <Ionicons
+                      name="briefcase-outline"
+                      size={20}
+                      color="#3498db"
+                    />
+                    <Text style={styles.infoCardTitle}>Débouchés</Text>
+                  </View>
+                  <Text style={styles.infoCardText}>
+                    {formation.careerProspects}
+                  </Text>
+                </View>
+              )}
+
+              {formation.housingInfo && (
+                <View style={styles.infoCard}>
+                  <View style={styles.infoCardHeader}>
+                    <Ionicons name="home-outline" size={20} color="#3498db" />
+                    <Text style={styles.infoCardTitle}>Logement</Text>
+                  </View>
+                  <Text style={styles.infoCardText}>
+                    {formation.housingInfo}
+                  </Text>
+                </View>
+              )}
+
+              {formation.residenceOptions && (
+                <View style={styles.infoCard}>
+                  <View style={styles.infoCardHeader}>
+                    <Ionicons name="bed-outline" size={20} color="#3498db" />
+                    <Text style={styles.infoCardTitle}>
+                      Résidence universitaire/internat
+                    </Text>
+                  </View>
+                  <Text style={styles.infoCardText}>
+                    {formation.residenceOptions}
+                  </Text>
+                </View>
+              )}
+
+              {formation.orientationAdvice && (
+                <View style={styles.infoCard}>
+                  <View style={styles.infoCardHeader}>
+                    <Ionicons
+                      name="compass-outline"
+                      size={20}
+                      color="#3498db"
+                    />
+                    <Text style={styles.infoCardTitle}>
+                      Conseils d'orientation
+                    </Text>
+                  </View>
+                  <Text style={styles.infoCardText}>
+                    {formation.orientationAdvice}
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
+
           {/* Call to action */}
           <View style={styles.ctaContainer}>
             <TouchableOpacity
@@ -500,6 +657,48 @@ export default function FormationDetailsScreen() {
 }
 
 const styles = StyleSheet.create({
+  detailedInfoContainer: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  infoCard: {
+    backgroundColor: "#f8f9fa",
+    borderRadius: 8,
+    padding: 16,
+    marginTop: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: "#3498db",
+  },
+  infoCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  infoCardTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#2c3e50",
+    marginLeft: 8,
+  },
+  infoCardText: {
+    fontSize: 14,
+    color: "#555",
+    lineHeight: 20,
+  },
+  detailValueLink: {
+    fontSize: 14,
+    color: "#3498db",
+    flex: 1,
+    textAlign: "right",
+    textDecorationLine: "underline",
+  },
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
