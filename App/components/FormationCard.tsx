@@ -73,13 +73,6 @@ export const FormationCard: React.FC<Props> = ({
             </View>
           </View>
 
-          <View style={styles.locationRow}>
-            <Ionicons name="location-outline" size={16} color="#555" />
-            <Text style={styles.location} numberOfLines={1}>
-              {formation.region ? formation.region : "Région inconnue"}
-            </Text>
-          </View>
-
           <View style={styles.programContainer}>
             <Text style={styles.programLabel}>Programme</Text>
             <Text style={styles.programText} numberOfLines={2}>
